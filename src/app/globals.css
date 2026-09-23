@@ -1,0 +1,323 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    --primary: 265 85% 55%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 210 20% 90%;
+    --secondary-foreground: 215 25% 25%;
+
+    --muted: 210 20% 90%;
+    --muted-foreground: 215 15% 45%;
+
+    --accent: 210 20% 90%;
+    --accent-foreground: 215 25% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 265 85% 55%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 250 45% 5%;
+    --foreground: 0 0% 100%;
+
+    --card: 250 40% 8%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 250 40% 10%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 265 85% 65%;
+    --primary-foreground: 250 45% 5%;
+
+    --secondary: 190 95% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 250 25% 18%;
+    --muted-foreground: 250 15% 85%;
+
+    --accent: 265 85% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 250 25% 15%;
+    --input: 250 25% 15%;
+    --ring: 265 85% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground min-h-screen font-medium;
+    background-image: 
+      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsl(var(--secondary) / 0.08) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+  body:has(.dashboard-shell) {
+    overflow: hidden;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+/* ── Custom scrollbar for code blocks ─────────────────────────── */
+.code-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+}
+.code-scrollbar:hover {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
+}
+.code-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.code-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+.code-scrollbar::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+.code-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.4);
+}
+.code-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Slim scrollbar for Monaco editor containers */
+.monaco-scrollbar .slider {
+  border-radius: 3px !important;
+}
+
+/* ── Force light theme during PDF capture ────────────────────── */
+.pdf-capture,
+.pdf-capture * {
+  --background: 210 20% 98% !important;
+  --foreground: 215 25% 15% !important;
+  --card: 0 0% 100% !important;
+  --card-foreground: 215 25% 15% !important;
+  --popover: 0 0% 100% !important;
+  --popover-foreground: 215 25% 15% !important;
+  --primary: 265 85% 55% !important;
+  --primary-foreground: 210 20% 98% !important;
+  --secondary: 210 20% 90% !important;
+  --secondary-foreground: 215 25% 25% !important;
+  --muted: 210 20% 90% !important;
+  --muted-foreground: 215 15% 45% !important;
+  --accent: 210 20% 90% !important;
+  --accent-foreground: 215 25% 15% !important;
+  --destructive: 0 84% 60% !important;
+  --destructive-foreground: 210 20% 98% !important;
+  --border: 214 32% 91% !important;
+  --input: 214 32% 91% !important;
+  --ring: 265 85% 55% !important;
+  color-scheme: light !important;
+}
+
+/* ── Print styles for PDF export ─────────────────────────────── */
+@media print {
+  :root {
+    color-scheme: light !important;
+    --background: 0 0% 100% !important;
+    --foreground: 215 25% 15% !important;
+    --card: 0 0% 100% !important;
+    --card-foreground: 215 25% 15% !important;
+    --primary: 265 85% 55% !important;
+    --primary-foreground: 0 0% 100% !important;
+    --secondary: 210 20% 90% !important;
+    --secondary-foreground: 215 25% 25% !important;
+    --muted: 210 20% 90% !important;
+    --muted-foreground: 215 15% 45% !important;
+    --border: 214 32% 91% !important;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    overflow: visible !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  main > * > * {
+    overflow: visible !important;
+  }
+
+  * {
+    overflow: visible !important;
+  }
+
+  .space-y-6 > * {
+    break-inside: avoid;
+  }
+}
+
+/* AI button spinning rainbow border */
+.ai-border-spin {
+  position: relative;
+}
+.ai-border-spin::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: conic-gradient(
+    from 0deg,
+    #f43f5e, #f59e0b, #10b981, #3b82f6, #8b5cf6, #f43f5e
+  );
+  border-radius: 50%;
+  animation: ai-spin 2s linear infinite;
+  will-change: transform;
+}
+@keyframes ai-spin {
+  to { rotate: 360deg; }
+}
+
+/* Guided tour */
+.tour-tooltip-enter {
+  animation: tour-fade-in 0.25s ease-out;
+}
+@keyframes tour-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Animations ────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in-from-bottom {
+  from { transform: translateY(1rem); }
+  to { transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 1s ease-out forwards;
+}
+
+.animate-slide-in-bottom {
+  animation: slide-in-from-bottom 1s ease-out forwards;
+}
+
+/* ── Voice waveform bar animation ─────────────────────────────── */
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(0.4); }
+  50%       { transform: scaleY(1); }
+}
+
+/* ── Send button feedback animations ──────────────────────────── */
+@keyframes sendRipple {
+  0%   { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes checkPop {
+  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+
+/* ── Coaching Mode theme override ──────────────────────────────── */
+[data-coaching-mode="true"] {
+  --background: 217 30% 95%;
+  --foreground: 217 40% 12%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 217 40% 12%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 217 40% 12%;
+
+  --primary: 217 80% 28%;           /* Dark navy blue button */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 217 25% 90%;
+  --secondary-foreground: 217 40% 18%;
+
+  --muted: 217 20% 92%;
+  --muted-foreground: 217 15% 45%;
+
+  --accent: 217 25% 90%;
+  --accent-foreground: 217 40% 12%;
+
+  --border: 217 25% 88%;
+  --input: 217 25% 88%;
+  --ring: 217 80% 28%;
+}
+
+.dark [data-coaching-mode="true"],
+[data-coaching-mode="true"].dark {
+  --background: 217 40% 12%;       /* Lighter navy blue background replacing purple bg */
+  --foreground: 217 20% 98%;
+
+  --card: 217 38% 16%;
+  --card-foreground: 217 20% 98%;
+
+  --popover: 217 38% 16%;
+  --popover-foreground: 217 20% 98%;
+
+  --primary: 217 75% 32%;          /* Darker navy blue button relative to overall palette */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 217 30% 22%;
+  --secondary-foreground: 217 20% 95%;
+
+  --muted: 217 25% 20%;
+  --muted-foreground: 217 15% 75%;
+
+  --accent: 217 30% 22%;
+  --accent-foreground: 217 20% 98%;
+
+  --border: 217 25% 20%;
+  --input: 217 25% 20%;
+  --ring: 217 75% 32%;
+}
+

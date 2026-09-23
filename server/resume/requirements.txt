@@ -1,0 +1,13 @@
+fastapi==0.115.12
+uvicorn==0.34.2
+python-multipart==0.0.20
+ai-resume-parser[full]==1.0.6
+langchain>=0.3.0
+langchain-openai>=0.2.0
+openai>=1.40.0
+pydantic>=2.7.0
+Jinja2>=3.1.0
+google-auth>=2.0.0
+google-genai>=0.1.0
+json-repair>=0.30.0
+

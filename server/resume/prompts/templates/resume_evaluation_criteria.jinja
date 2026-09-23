@@ -1,0 +1,145 @@
+You are evaluating a resume{% if job_title %} for the role: **{{ job_title }}**{% endif %}.
+
+---
+
+## SECTION 1 — CANDIDATE COMPETENCY PROFILE (`scores`)
+
+{% if cv_assessment_criteria %}
+To ensure perfect consistency across all candidates and avoid evaluating soft skills that cannot be proven via a CV, you MUST output exactly these {{ cv_assessment_criteria | length }} fixed scoring categories as the keys in your `scores` dictionary:
+
+{% for criterion in cv_assessment_criteria %}
+{% if criterion is mapping %}
+- **"{{ criterion.name }}"** — {{ criterion.description }}
+{% else %}
+- **"{{ criterion }}"**
+{% endif %}
+{% endfor %}
+
+**CRITICAL RULES:**
+- You MUST use EXACTLY the short names listed above (the text in quotes) as the keys in your `scores` dictionary. Do not change the wording. Names are max 2 words.
+- DO NOT OMIT ANY CATEGORY. If the candidate has absolutely no experience for a category, you MUST still include the category as a key, give it a `score` of 0, and explain the lack of experience in the `evidence`.
+- Allocate a maximum of 20 points per category (total max 100). CRITICAL: Do NOT give a perfect score (20/20) for a category unless the candidate's resume represents an absolute, flawless, 100% perfect match with exceptional explicit evidence. If there is ANY missing aspect, gap, or lack of explicit evidence, the score MUST be strictly lower.
+- NEVER evaluate soft skills like "Communication Skills", "Problem-Solving", or "Cultural Fit". Use ONLY the categories above.
+{% else %}
+To ensure perfect consistency across all candidates and avoid evaluating soft skills that cannot be proven via a CV, you MUST output exactly these 5 fixed scoring categories as the keys in your `scores` dictionary:
+
+1. **"Domain Expertise"**: Depth of knowledge and experience in the specific field of the JD.
+2. **"Technical Proficiency"**: Tools, software, languages, and hard skills mentioned.
+3. **"Business Impact"**: Measurable results, KPIs, efficiency gains, and achievements.
+4. **"Leadership & Autonomy"**: Project ownership, mentoring, managing, or working independently.
+5. **"Career Progression"**: Promotions, increasing responsibility, and career trajectory.
+
+**CRITICAL RULES:**
+- You MUST use exactly these 5 strings as the keys in your `scores` dictionary.
+- DO NOT OMIT ANY CATEGORY. If the candidate has absolutely no experience for a category, you MUST still include the category as a key, give it a `score` of 0, and explain the lack of experience in the `evidence`.
+- Allocate a maximum of 20 points per category (total max 100). CRITICAL: Do NOT give a perfect score (20/20) for a category unless the candidate's resume represents an absolute, flawless, 100% perfect match with exceptional explicit evidence. If there is ANY missing aspect, gap, or lack of explicit evidence, the score MUST be strictly lower.
+- NEVER evaluate soft skills like "Communication Skills", "Problem-Solving", or "Cultural Fit". Use ONLY the 5 categories above.
+{% endif %}
+
+{% if job_description %}
+## JOB DESCRIPTION (Read first — use to determine role type and required domain)
+
+**DOMAIN EXPERIENCE RULE:**
+1. Identify the target role domain (e.g., Finance, Marketing, Software Engineering).
+2. Count ONLY experience in that exact domain as `relevant_experience_months`.
+3. All other experience goes into `irrelevant_experience_months` — this includes transferable soft skills but NOT domain-specific experience.
+4. An IT professional applying for Finance has 0 relevant finance months — even if they used Excel.
+
+Job description:
+{{ job_description }}
+
+{% endif %}
+
+
+---
+
+## SECTION 2 — JD ALIGNMENT MATRIX (`jd_matching`)
+
+This section checks the resume against the **specific requirements of this job**. 
+
+{% if cv_jd_alignment_criteria %}
+**CRITICAL RULES:**
+To ensure fairness across all candidates, you MUST output EXACTLY {{ cv_jd_alignment_criteria | length }} rows for `jd_matching`, and you MUST use the following exact short names for the `label` field (max 2 words):
+{% for criterion in cv_jd_alignment_criteria %}
+{% if criterion is mapping %}
+- "{{ criterion.name }}" — {{ criterion.description }}
+{% else %}
+- "{{ criterion }}"
+{% endif %}
+{% endfor %}
+
+For each of these rows:
+- `label`: Must be exactly one of the short names above (the quoted text only).
+- `requirement`: One sentence summarizing the JD requirement for this bucket (this is shown in the UI dropdown).
+- `evidence`: How the candidate's resume stacks up against this bucket.
+- `coverage`: "Yes" (fully meets), "Partial" (partially meets), "No" (does not meet).
+
+**CRITICAL RULE: DO NOT OMIT ANY ROWS.** You must output exactly {{ cv_jd_alignment_criteria | length }} rows. Even if the candidate has absolutely no experience or mention of a requirement, you MUST still include the row, set `coverage` to "No", and explain the lack of evidence in `evidence`.
+{% else %}
+**CRITICAL RULES:**
+To ensure fairness across all candidates, you MUST output EXACTLY 4 rows for `jd_matching`, and you MUST use the following exact strings for the `label` field:
+1. "Experience Fit"
+2. "Education & Credentials"
+3. "Technical Skills"
+4. "Role Responsibilities"
+
+For each of these 4 rows:
+- `label`: Must be exactly one of the 4 strings above.
+- `requirement`: Summarize all requirements from the JD that fall into this bucket (e.g. "Minimum 2 years experience in Finance", or "Proficient in React and Node").
+- `evidence`: How the candidate's resume stacks up against this bucket.
+- `coverage`: "Yes" (fully meets), "Partial" (partially meets), "No" (does not meet).
+
+**CRITICAL RULE: DO NOT OMIT ANY ROWS.** You must output exactly 4 rows. Even if the candidate has absolutely no experience or mention of a requirement, you MUST still include the row, set `coverage` to "No", and explain the lack of evidence in `evidence`.
+{% endif %}
+
+---
+
+## BONUS POINTS (max 20)
+- Rare certifications (CPA, CFA, CMA for finance; PMP for PM; etc.)
+- Exceptional quantified impact (cost saved, revenue generated, team scaled)
+- Publications, industry recognition, professional memberships
+
+## DEDUCTIONS
+- Clearly misrepresented or inflated claims
+- Large unexplained gaps
+- Resume is generic with no role-specific evidence
+
+---
+
+## OUTPUT REQUIREMENTS
+1. Respond with ONLY valid JSON — no markdown, no code blocks, no explanation
+2. ALL top-level fields are REQUIRED: scores, bonus_points, deductions, key_strengths, areas_for_improvement, jd_matching, domain_experience
+3. Sum of all `scores[x].max` MUST equal exactly 100
+4. `bonus_points.total` must be <= 20
+
+RETURN THIS JSON STRUCTURE (with real values, not placeholders):
+
+{
+  "scores": {
+    "Domain Expertise": {"score": 5, "max": 20, "evidence": "No accounting or reporting experience found — entire career in IT/Software"},
+    "Technical Proficiency": {"score": 14, "max": 20, "evidence": "Proficient in SQL and databases but no SAP, ERP, or advanced financial Excel experience"},
+    "Business Impact": {"score": 12, "max": 20, "evidence": "Led cross-department IT projects; optimized system performance by 30%"},
+    "Leadership & Autonomy": {"score": 15, "max": 20, "evidence": "Mentored 3 junior developers and managed standalone integrations"},
+    "Career Progression": {"score": 18, "max": 20, "evidence": "Promoted from Junior Analyst to Senior Developer in 4 years"}
+  },
+  "bonus_points": {"total": 0, "breakdown": "No finance-specific certifications or exceptional achievements"},
+  "deductions": {"total": 10, "reasons": "Significant domain mismatch: applying for Finance role with 0 months of Finance experience"},
+  "key_strengths": ["Strong analytical and systems thinking", "Cross-functional project leadership", "Broad IT and database skills"],
+  "areas_for_improvement": ["No accounting or finance domain experience", "No ERP/SAP knowledge", "Missing professional accounting qualifications"],
+  "jd_matching": [
+    {"label": "Experience Fit", "requirement": "Minimum 6 years solid accounting experience", "evidence": "Candidate has 17 total career years but 0 in accounting/finance. All experience is in IT/Software.", "coverage": "No"},
+    {"label": "Education & Credentials", "requirement": "Degree in Accounting or related discipline, CPA preferred", "evidence": "Holds Computer Science degree, no CPA", "coverage": "No"},
+    {"label": "Technical Skills", "requirement": "Proficiency in SAP and Advanced Excel", "evidence": "No mention of SAP in resume, likely has basic Excel", "coverage": "Partial"},
+    {"label": "Role Responsibilities", "requirement": "Manage month-end closing and financial reporting", "evidence": "No evidence of financial reporting duties", "coverage": "No"}
+  ],
+  "domain_experience": {
+    "target_role_domain": "Finance Operations / Accounting",
+    "relevant_experience_months": 0,
+    "irrelevant_experience_months": 204,
+    "explanation": "All roles (Application Developer, System Analyst, etc.) are in IT/Software Development. None qualify as Finance or Accounting experience."
+  }
+}
+
+Resume to evaluate:
+
+{{ text_content }}

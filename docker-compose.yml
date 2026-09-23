@@ -1,0 +1,106 @@
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+      target: runner
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    image: kimiyi-nextjs:latest
+    # standalone server — node server.js already binds to PORT
+    command: node server.js
+    environment:
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+      - PORT=3001
+      - RESUME_SERVICE_URL=http://resume:8091
+      - LOCAL_MEDIA_DIR=/app/media
+    env_file:
+      - .env.local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "app.inluwa.com:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      - resume
+      - relay
+    volumes:
+      - ./logs:/app/logs
+      - ./media:/app/media
+      - ./single-quanta-461104-i7-af0effe9cc10.json:/app/single-quanta-461104-i7-af0effe9cc10.json:ro
+
+  relay:
+    build:
+      context: .
+      dockerfile: Dockerfile.relay
+    image: kimiyi-relay:latest
+    # Runs the google voice relay using tsx
+    command: npm run dev:google-voice
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./single-quanta-461104-i7-af0effe9cc10.json:/app/single-quanta-461104-i7-af0effe9cc10.json:ro
+    restart: unless-stopped
+
+  resume:
+    build:
+      context: .
+      dockerfile: Dockerfile.resume
+    image: interview-resume:latest
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8091
+    env_file:
+      - .env.local
+    volumes:
+      - ./single-quanta-461104-i7-af0effe9cc10.json:/app/service-account.json
+    restart: unless-stopped
+
+#  emotion:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.emotion
+#    image: interview-emotion:latest
+#    environment:
+#      - HOST=0.0.0.0
+#      - PORT=8090
+#    env_file:
+#      - .env.local
+#    volumes:
+#      - deepface_weights:/root/.deepface
+#    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.relay
+    image: kimiyi-relay:latest
+    command: node gateway.js
+    ports:
+      - "3000:3000"
+    environment:
+      - TARGET_NEXT=http://nextjs:3001
+      # - TARGET_EMOTION=http://emotion:8090
+      - TARGET_RESUME=http://resume:8091
+      - TARGET_RELAY_GOOGLE=http://relay:8082
+      - TARGET_RELAY_VOICE=http://relay:8082
+      # Connects to the host's locally running Supabase
+      - TARGET_SUPABASE=http://host.docker.internal:54321
+    env_file:
+      - .env.local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - nextjs
+      # - emotion
+      - resume
+      - relay
+    restart: unless-stopped
+
+volumes:
+  deepface_weights:

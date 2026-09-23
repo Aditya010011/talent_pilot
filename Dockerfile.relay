@@ -1,0 +1,30 @@
+# Relay/Gateway image — needs full node_modules to run tsx + gateway.js
+# Kept as single-stage but excludes the heavy Next.js build step
+FROM node:20-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    build-essential \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install only production + relay deps
+COPY package.json package-lock.json* ./
+RUN npm install --no-audit --no-fund && npm cache clean --force
+
+# Copy all server-side files needed for relay and gateway
+# Note: google-voice-relay.ts imports from ../src/lib/* so src must also be present
+COPY server ./server
+COPY src ./src
+COPY gateway.js* ./
+COPY tsconfig.json* ./
+
+CMD ["node", "gateway.js"]

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NarrativeAI - Training Module</title>
+<!-- Google Fonts: Manrope & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <!-- FontAwesome for UI Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- PPTX Parsing and PDF Rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "background": "#fdfdfd",
+              "secondary-container": "#f1f3f7",
+              "on-tertiary-fixed-variant": "#4c5870",
+              "surface-container-low": "#f8f9fb",
+              "on-primary": "#ffffff",
+              "tertiary-fixed": "#d1ddfa",
+              "on-error": "#ffffff",
+              "inverse-surface": "#1a1c1e",
+              "on-tertiary": "#ffffff",
+              "primary-dim": "#3f51b5",
+              "outline-variant": "#e1e2e9",
+              "tertiary-fixed-dim": "#c3cfeb",
+              "inverse-primary": "#b3c5ff",
+              "primary-fixed-dim": "#cdd1ff",
+              "surface-container-high": "#ebeef2",
+              "surface": "#ffffff",
+              "error-container": "#f9dedc",
+              "outline": "#74777f",
+              "on-surface-variant": "#44474e",
+              "secondary-fixed": "#e1e2ec",
+              "on-surface": "#1a1c1e",
+              "primary-fixed": "#e0e1ff",
+              "tertiary-container": "#f0f4ff",
+              "surface-tint": "#3f51b5",
+              "error": "#ba1a1a",
+              "on-background": "#1a1c1e",
+              "on-secondary-container": "#191c1e",
+              "surface-bright": "#fdfdfd",
+              "on-tertiary-container": "#001b3d",
+              "on-primary-fixed": "#001452",
+              "on-secondary-fixed-variant": "#44474e",
+              "surface-dim": "#dedee7",
+              "surface-container-highest": "#e2e2e6",
+              "secondary-dim": "#bfc6dc",
+              "tertiary-dim": "#bac6ea",
+              "inverse-on-surface": "#f1f0f4",
+              "primary": "#3f51b5",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed": "#001b3d",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#585e71",
+              "error-dim": "#ffb4ab",
+              "on-error-container": "#410002",
+              "surface-variant": "#e1e2e9",
+              "tertiary": "#535f7e",
+              "on-primary-container": "#001452",
+              "secondary-fixed-dim": "#bfc6dc",
+              "on-secondary-fixed": "#151b2c",
+              "primary-container": "#e0e1ff",
+              "surface-container": "#f0f0f3",
+              "on-primary-fixed-variant": "#263a9c"
+            },
+            fontFamily: {
+              "headline": ["Manrope", "sans-serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.25rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            background-color: #fcfcfd;
+            color: #1a1c1e;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body">
+<!-- Header -->
+<header class="bg-surface border-b border-outline-variant/50 px-8 py-4 z-40 sticky top-0 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-xl" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+</div>
+<span class="text-xl font-extrabold text-on-surface font-headline tracking-tight">Narrative<span class="text-primary">AI</span></span>
+<div class="ml-4 pl-4 border-l border-outline-variant h-6 flex items-center">
+<span class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">Training Session</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button id="upload-btn" class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-label text-sm font-semibold hover:bg-primary-dim transition-all shadow-lg shadow-primary/20">
+    <span class="material-symbols-outlined text-lg">upload_file</span>
+    Upload PPTX
+</button>
+<input type="file" id="pptx-input" accept=".pptx" class="hidden" />
+<button id="settings-btn" class="p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-full" title="API Credentials Settings">
+<span class="material-symbols-outlined text-2xl">settings</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-full">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</button>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center px-8 py-8 max-w-6xl mx-auto w-full">
+<!-- Training Module Card -->
+<div class="w-full bg-surface border border-outline-variant rounded-3xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col">
+<!-- Card Header -->
+<div class="px-10 py-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<h2 class="font-headline text-xs font-bold text-on-surface-variant tracking-[0.2em] uppercase">AI Narrative Commentary</h2>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 bg-primary-container/40 rounded-full">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-[10px] font-bold text-on-primary-container uppercase">Live Insight</span>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-12 md:p-16 flex-grow flex flex-col">
+<div id="explanation-container" class="space-y-10 text-on-surface font-body leading-[1.6] text-xl md:text-2xl font-medium max-w-4xl">
+    <div id="explanation-text" contenteditable="true" spellcheck="false" class="text-on-surface relative pl-8 border-l-2 border-primary transition-all duration-300 focus:outline-none focus:border-l-4 min-h-[100px]" title="Click to edit explanation">
+        Please upload a PPTX file to begin the walkthrough. Click on a slide below to hear the AI explanation.
+    </div>
+</div>
+<!-- Contextual Insights Section -->
+<div class="mt-auto pt-16">
+<div class="p-5 bg-tertiary-container/20 border border-tertiary-container/30 rounded-xl flex items-start gap-4">
+<div class="p-2 bg-tertiary/10 rounded-lg">
+<span class="material-symbols-outlined text-tertiary text-xl" data-icon="lightbulb">lightbulb</span>
+</div>
+<div>
+<p class="text-[11px] font-bold text-tertiary uppercase tracking-wider mb-1">Slide Content Hint</p>
+<p id="slide-text-hint" class="text-sm text-on-tertiary-container leading-relaxed italic">Upload a PPTX to see slide content here.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Progress & Controls Footer -->
+<div class="px-10 py-8 bg-surface-container-lowest border-t border-outline-variant flex flex-col gap-6">
+<!-- Progress Bar -->
+<div class="w-full">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Narrative Progress</span>
+<span id="progress-text" class="text-[10px] font-bold text-primary tabular-nums">0 / 0 Slides</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div id="progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%;"></div>
+</div>
+</div>
+<!-- Integrated Playback Controls -->
+<div class="flex items-center justify-center gap-10">
+<button id="prev-btn" class="p-2 text-on-surface-variant hover:text-primary transition-colors disabled:opacity-30">
+<span class="material-symbols-outlined text-2xl">skip_previous</span>
+</button>
+<button id="rewind-btn" class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">replay_10</span>
+</button>
+<div class="flex items-center gap-4">
+<button id="play-pause-btn" class="w-14 h-14 flex items-center justify-center bg-primary text-on-primary rounded-full shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+<button id="forward-btn" class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">forward_10</span>
+</button>
+<button id="next-btn" class="p-2 text-on-surface-variant hover:text-primary transition-colors disabled:opacity-30">
+<span class="material-symbols-outlined text-2xl">skip_next</span>
+</button>
+<div class="ml-10 flex items-center gap-2 bg-surface-container-high rounded-full px-4 py-2 border border-outline-variant/30 shadow-sm hover:border-primary/50 transition-all">
+    <span class="material-symbols-outlined text-on-surface-variant text-lg">language</span>
+    <select id="language-select" class="bg-transparent text-on-surface text-[11px] font-bold uppercase tracking-wider focus:outline-none cursor-pointer">
+        <option value="en-US">English</option>
+        <option value="es-ES">Español</option>
+        <option value="fr-FR">Français</option>
+        <option value="zh-CN">中文 (简体)</option>
+        <option value="yue-HK">粵語 (Cantonese)</option>
+        <option value="de-DE">Deutsch</option>
+        <option value="ja-JP">日本語</option>
+        <option value="hi-IN">हिन्दी</option>
+    </select>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Presentation Outline -->
+<footer class="bg-surface border-t border-outline-variant px-8 py-6 w-full mt-auto">
+<div class="max-w-6xl mx-auto">
+<div class="flex items-center justify-between mb-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">list_alt</span>
+<h3 class="font-headline text-on-surface-variant font-bold text-[10px] tracking-[0.15em] uppercase">Session Curriculum</h3>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase tracking-tighter">Module 04 of 12</span>
+</div>
+<div id="thumbnails-container" class="flex gap-4 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+    <!-- Thumbnails will be injected here -->
+    <div class="flex items-center justify-center w-full py-10 text-on-surface-variant/50 italic text-sm">
+        No slides uploaded yet
+    </div>
+</div>
+</div>
+</footer>
+<script>
+    // Constants and Elements
+    const uploadBtn = document.getElementById('upload-btn');
+    const pptxInput = document.getElementById('pptx-input');
+    const thumbnailsContainer = document.getElementById('thumbnails-container');
+    const explanationText = document.getElementById('explanation-text');
+    const slideTextHint = document.getElementById('slide-text-hint');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playPauseIcon = playPauseBtn.querySelector('.material-symbols-outlined');
+    const nextBtn = document.getElementById('next-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+
+    // Initialize PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // State
+    let slides = [];
+    let currentSlideIndex = -1;
+    let isPlaying = false;
+    let utterance = null;
+    const LANG_NAME_MAPPING = {
+        'en-US': 'English',
+        'es-ES': 'Spanish',
+        'fr-FR': 'French',
+        'zh-CN': 'Chinese (Simplified)',
+        'yue-HK': 'Cantonese',
+        'de-DE': 'German',
+        'ja-JP': 'Japanese',
+        'hi-IN': 'Hindi'
+    };
+
+    // Initialization
+    updatePlaybackControls();
+
+    uploadBtn.addEventListener('click', () => pptxInput.click());
+
+    pptxInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        explanationText.textContent = "Parsing PPTX...";
+        try {
+            const zip = await JSZip.loadAsync(file);
+            const slideFiles = Object.keys(zip.files).filter(name => name.startsWith('ppt/slides/slide') && name.endsWith('.xml'));
+            
+            slideFiles.sort((a, b) => {
+                const numA = parseInt(a.match(/slide(\d+)\.xml/)[1]);
+                const numB = parseInt(b.match(/slide(\d+)\.xml/)[1]);
+                return numA - numB;
+            });
+
+            slides = await Promise.all(slideFiles.map(async (fileName, index) => {
+                const content = await zip.file(fileName).async('string');
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(content, "text/xml");
+                
+                const textNodes = xmlDoc.getElementsByTagName('a:t');
+                let slideText = "";
+                for (let i = 0; i < textNodes.length; i++) {
+                    slideText += textNodes[i].textContent + " ";
+                }
+
+                let slideImage = null;
+                const slideNum = fileName.match(/slide(\d+)\.xml/)[1];
+                const relsPath = `ppt/slides/_rels/slide${slideNum}.xml.rels`;
+                if (zip.file(relsPath)) {
+                    const relsContent = await zip.file(relsPath).async('string');
+                    const relsDoc = parser.parseFromString(relsContent, 'application/xml');
+                    const rels = relsDoc.getElementsByTagName('Relationship');
+                    for (let i = 0; i < rels.length; i++) {
+                        const type = rels[i].getAttribute('Type');
+                        if (type && type.endsWith('/image')) {
+                            let target = rels[i].getAttribute('Target');
+                            if (target.startsWith('../')) {
+                                target = target.replace('../', 'ppt/');
+                            } else {
+                                target = `ppt/slides/${target}`;
+                            }
+                            if (zip.file(target)) {
+                                const imgData = await zip.file(target).async('base64');
+                                const ext = target.split('.').pop().toLowerCase();
+                                const mime = ext === 'png' ? 'image/png' : (ext === 'jpeg' || ext === 'jpg' ? 'image/jpeg' : 'image/gif');
+                                slideImage = `data:${mime};base64,${imgData}`;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return {
+                    id: index,
+                    name: `Slide ${index + 1}`,
+                    text: slideText.trim() || "No text found on this slide.",
+                    image: slideImage,
+                    explanation: null, // To be filled in background
+                    generating: false
+                };
+            }));
+
+            currentSlideIndex = slides.length > 0 ? 0 : -1;
+            renderThumbnails();
+            
+            // Start background generation for all slides
+            generateAllExplanations();
+
+            // Kick off high-quality Slide Image Generation
+            generateRealThumbnails(file);
+
+            if (currentSlideIndex !== -1) {
+                selectSlide(0, false);
+            }
+            explanationText.textContent = "PPTX uploaded. AI is pre-generating explanations for all slides...";
+        } catch (error) {
+            console.error(error);
+            explanationText.textContent = "Error parsing PPTX. Please try again.";
+        }
+    });
+
+    async function generateRealThumbnails(file) {
+        console.log("Attempting to generate high-quality slide thumbnails...");
+        
+        // Try using local conversion server first
+        try {
+            const success = await convertWithLocalServer(file);
+            if (success) return;
+        } catch (e) {
+            console.log("Local server not available, falling back to PPTX extraction...");
+        }
+        
+        // Fallback: Use extracted images from PPTX
+        useExtractedImages();
+    }
+    
+    async function convertWithLocalServer(file) {
+        // Convert file to base64
+        const reader = new FileReader();
+        const fileBase64 = await new Promise((resolve) => {
+            reader.onload = () => {
+                const base64 = reader.result.split(',')[1]; // Remove data:application/... prefix
+                resolve(base64);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        console.log("Sending to local conversion server...");
+        const response = await fetch('http://localhost:5001/convert/base64', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pptx_base64: fileBase64 })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.slides) {
+            console.log(`✅ Successfully converted ${data.count} slides to images`);
+            
+            // Update slides with high-quality images
+            for (let i = 0; i < Math.min(slides.length, data.slides.length); i++) {
+                slides[i].image = data.slides[i];
+                slides[i].hasFullPreview = true;
+            }
+            
+            renderThumbnails();
+            return true;
+        }
+        
+        throw new Error(data.error || 'Conversion failed');
+    }
+    
+    function useExtractedImages() {
+        if (slides.some(s => s.image)) {
+            console.log("💡 Using extracted PPTX images as thumbnails.");
+            console.log("   For better quality, start the conversion server:");
+            console.log("   python3 slide_converter_server.py");
+        } else {
+            console.log("⚠️ No images found in PPTX. Thumbnails will show text preview only.");
+        }
+        renderThumbnails();
+    }
+
+    async function generateAllExplanations() {
+        if (slides.length === 0) return;
+        
+        // Show generating status and clear old explanations on all slides
+        slides.forEach(s => {
+            s.explanation = null;
+            s.generating = true;
+        });
+        if (currentSlideIndex !== -1) {
+            explanationText.textContent = "AI is currently generating explanations... Please wait.";
+        }
+        renderThumbnails();
+
+        const languageSelect = document.getElementById('language-select');
+        const targetLang = languageSelect.value;
+        const targetLangName = LANG_NAME_MAPPING[targetLang] || "English";
+
+        const allContent = slides.map(s => `Slide ${s.id + 1}: ${s.text}`).join("\n\n---\n\n");
+        
+        const fallbackToIndividual = () => {
+            slides.forEach(async (slide) => {
+                if (slide.generating) {
+                    try {
+                        const explanation = await getAIExplanation(slide.text);
+                        slide.explanation = explanation;
+                        slide.generating = false;
+                        if (currentSlideIndex === slide.id) {
+                            explanationText.innerText = explanation;
+                        }
+                        renderThumbnails();
+                    } catch (e) {
+                        slide.generating = false;
+                        slide.explanation = "Error generating explanation.";
+                        renderThumbnails();
+                    }
+                }
+            });
+        };
+
+        try {
+            console.log(`Calling Azure OpenAI (Batch) in ${targetLangName}...`);
+            const cleanEndpoint = azureEndpoint.replace(/\/$/, "");
+            const url = `${cleanEndpoint}/openai/deployments/${azureDeployment}/chat/completions?api-version=${azureApiVersion}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'api-key': azureApiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    messages: [{
+                        role: "user",
+                        content: `Act as a formal coaching instructor teaching a class using these slides. You are NOT a presenter giving a speech, but an instructor teaching the concepts. Below is the content of multiple presentation slides. Provide a formal, educational coaching explanation for EACH slide. 
+                        OUTPUT LANGUAGE: ${targetLangName}.
+                        Format your response as a JSON array of objects, where each object has "slide_index" (starting from 0) and "explanation" (Exactly 3 to 5 sentences).
+                        Do not use conversational filler.
+                        Return ONLY the raw JSON array (no markdown code blocks, no backticks).
+
+                        Slides Content:
+                        ${allContent}`
+                    }],
+                    temperature: 0.7
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Azure Batch API Error:", errorText);
+                throw new Error(`Azure Batch API failed with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            let text = data.choices[0].message.content.trim();
+            // Strip markdown formatting if any
+            if (text.startsWith('```')) {
+                text = text.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+            }
+            const results = JSON.parse(text);
+
+            results.forEach(res => {
+                if (slides[res.slide_index]) {
+                    slides[res.slide_index].explanation = res.explanation;
+                    slides[res.slide_index].generating = false;
+                }
+            });
+
+            if (currentSlideIndex !== -1) {
+                explanationText.innerText = slides[currentSlideIndex].explanation || "No explanation generated.";
+            }
+            renderThumbnails();
+        } catch (error) {
+            console.error("Azure Batch AI Error:", error);
+            explanationText.textContent = "Error generating batch explanations. Falling back to individual generation...";
+            fallbackToIndividual();
+        }
+    }
+
+    function renderThumbnails() {
+        thumbnailsContainer.innerHTML = '';
+        slides.forEach((slide, index) => {
+            const button = document.createElement('button');
+            button.className = `flex-shrink-0 w-44 group ${index === currentSlideIndex ? 'active' : ''}`;
+            
+            const isActive = index === currentSlideIndex;
+            const borderClass = isActive ? 'border-2 border-primary shadow-md' : 'border border-outline-variant bg-surface-container-low group-hover:border-primary/50';
+            
+            const statusIcon = slide.generating ? 
+                '<div class="absolute inset-0 bg-black/40 flex items-center justify-center z-10"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div></div>' : 
+                (slide.explanation ? '<div class="absolute top-2 right-2 bg-green-500 rounded-full p-0.5 shadow-sm z-30"><span class="material-symbols-outlined text-white text-[12px] font-bold">check</span></div>' : '');
+
+            const imageHtml = slide.image ? 
+                `<img src="${slide.image}" class="absolute inset-0 w-full h-full ${slide.hasFullPreview ? 'object-contain' : 'object-cover'} opacity-70 group-hover:opacity-100 transition-opacity z-0" />` : 
+                `<div class="absolute inset-0 flex items-center justify-center p-3 z-0">
+                    <p class="text-[7px] text-on-surface-variant/50 text-center leading-tight italic line-clamp-5">${slide.text.substring(0, 120)}${slide.text.length > 120 ? '...' : ''}</p>
+                </div>`;
+
+            button.innerHTML = `
+                <div class="aspect-video rounded-lg overflow-hidden ${borderClass} transition-all duration-300 mb-2 relative flex flex-col items-center justify-center bg-surface-container-high shadow-sm p-4">
+                    ${imageHtml}
+                    <div class="z-20 bg-surface-container-high/90 px-2 py-0.5 rounded shadow-sm flex items-center justify-center mb-1">
+                        <span class="text-on-surface-variant font-bold text-sm">${index + 1}</span>
+                    </div>
+                    ${statusIcon}
+                    ${isActive ? '<div class="absolute inset-0 z-30 bg-primary/20 flex items-center justify-center"><span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: \'FILL\' 1;">play_circle</span></div>' : ''}
+                </div>
+                <p class="text-[10px] font-bold ${isActive ? 'text-primary' : 'text-on-surface-variant'} text-left truncate group-hover:text-primary transition-colors uppercase tracking-widest">${slide.name}</p>
+            `;
+
+            button.addEventListener('click', () => selectSlide(index));
+            thumbnailsContainer.appendChild(button);
+        });
+
+        if (slides.length > 0) {
+            const progress = ((currentSlideIndex + 1) / slides.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${currentSlideIndex + 1} / ${slides.length} Slides`;
+        } else {
+            progressBar.style.width = `0%`;
+            progressText.textContent = `0 / 0 Slides`;
+        }
+
+        updatePlaybackControls();
+    }
+
+    async function selectSlide(index, autoPlay = true) {
+        currentSlideIndex = index;
+        renderThumbnails();
+        
+        const slide = slides[index];
+        slideTextHint.textContent = slide.text.substring(0, 200) + (slide.text.length > 200 ? '...' : '');
+        
+        stopSpeech();
+
+        if (slide.explanation) {
+            explanationText.innerText = slide.explanation;
+            if (autoPlay && isPlaying) {
+                playSpeech();
+            }
+        } else if (slide.generating) {
+            explanationText.innerText = "AI is currently analyzing the Slides... Please wait a moment.";
+        } else {
+            explanationText.innerText = "Generating explanation...";
+            const explanation = await getAIExplanation(slide.text);
+            slide.explanation = explanation;
+            explanationText.innerText = explanation;
+            renderThumbnails();
+            
+            if (autoPlay && isPlaying) {
+                playSpeech();
+            }
+        }
+    }
+
+    // Save edited explanation back to slide object
+    explanationText.addEventListener('input', () => {
+        if (currentSlideIndex !== -1) {
+            slides[currentSlideIndex].explanation = explanationText.innerText;
+        }
+    });
+
+    // Re-generate if language changes
+    document.getElementById('language-select').addEventListener('change', () => {
+        if (slides.length > 0) {
+            generateAllExplanations();
+        }
+    });
+
+    async function getAIExplanation(text) {
+        const languageSelect = document.getElementById('language-select');
+        const targetLang = languageSelect.value;
+        const targetLangName = LANG_NAME_MAPPING[targetLang] || "English";
+
+        try {
+            console.log(`Calling Azure OpenAI (Single) in ${targetLangName}...`);
+            const cleanEndpoint = azureEndpoint.replace(/\/$/, "");
+            const url = `${cleanEndpoint}/openai/deployments/${azureDeployment}/chat/completions?api-version=${azureApiVersion}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'api-key': azureApiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    messages: [{
+                        role: "user",
+                        content: `Act as a formal coaching instructor teaching a class using these slides. You are NOT a presenter giving a speech, but an instructor teaching the concepts. Provide a formal and educational coaching explanation for this slide content. 
+                        OUTPUT LANGUAGE: ${targetLangName}.
+                        Be direct and do not use conversational filler. Length: Exactly 3 to 5 sentences. Slide Content: ${text}`
+                    }],
+                    temperature: 0.7
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Azure Single API Error:", errorText);
+                return `Azure AI Explanation failed (Status ${response.status}): ${errorText.substring(0, 100)}`;
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content.trim();
+        } catch (error) {
+            console.error("Azure Fetch Error:", error);
+            return "Error calling Azure API. Please check the browser console for details.";
+        }
+    }
+
+    const rewindBtn = document.getElementById('rewind-btn');
+    const forwardBtn = document.getElementById('forward-btn');
+
+    // ... (existing button list)
+
+    // Playback Controls
+    nextBtn.addEventListener('click', () => {
+        if (currentSlideIndex < slides.length - 1) {
+            selectSlide(currentSlideIndex + 1);
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (currentSlideIndex > 0) {
+            selectSlide(currentSlideIndex - 1);
+        }
+    });
+
+    rewindBtn.addEventListener('click', () => {
+        if (utterance instanceof Audio) {
+            utterance.currentTime = Math.max(0, utterance.currentTime - 10);
+        }
+    });
+
+    forwardBtn.addEventListener('click', () => {
+        if (utterance instanceof Audio) {
+            utterance.currentTime = Math.min(utterance.duration, utterance.currentTime + 10);
+        }
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+        if (currentSlideIndex === -1) return;
+        
+        if (isPlaying) {
+            pauseSpeech();
+        } else {
+            playSpeech();
+        }
+    });
+
+    function updatePlaybackControls() {
+        prevBtn.disabled = currentSlideIndex <= 0;
+        nextBtn.disabled = currentSlideIndex >= slides.length - 1 || currentSlideIndex === -1;
+    }
+
+    // TTS Logic
+    async function playSpeech() {
+        const text = explanationText.innerText;
+        if (!text || text.startsWith("Please upload") || text.startsWith("Generating") || text.startsWith("AI is currently")) return;
+
+        // Ensure any previous audio is stopped before starting a new one
+        stopSpeech();
+
+        isPlaying = true;
+        playPauseIcon.textContent = 'pause';
+
+        speakWebSpeech(text);
+    }
+
+    function speakWebSpeech(text) {
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+        } else {
+            window.speechSynthesis.cancel();
+            const webUtterance = new SpeechSynthesisUtterance(text);
+            webUtterance.onend = () => {
+                isPlaying = false;
+                playPauseIcon.textContent = 'play_arrow';
+            };
+            window.speechSynthesis.speak(webUtterance);
+            utterance = webUtterance;
+        }
+    }
+
+    function pauseSpeech() {
+        if (utterance instanceof Audio) {
+            utterance.pause();
+        } else {
+            window.speechSynthesis.pause();
+        }
+        isPlaying = false;
+        playPauseIcon.textContent = 'play_arrow';
+    }
+
+    function stopSpeech() {
+        if (utterance instanceof Audio) {
+            utterance.pause();
+            utterance.currentTime = 0;
+            utterance = null; // Clear the reference
+        } else {
+            window.speechSynthesis.cancel();
+            utterance = null;
+        }
+        // Don't change isPlaying here, let the caller decide
+    }
+
+    // Settings configuration state
+    let azureEndpoint = localStorage.getItem('azureEndpoint') || '';
+    let azureApiKey = localStorage.getItem('azureApiKey') || '';
+    let azureDeployment = localStorage.getItem('azureDeployment') || 'gpt-4o';
+    let azureApiVersion = localStorage.getItem('azureApiVersion') || '2024-02-15-preview';
+
+    // Settings elements
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const azureEndpointInput = document.getElementById('azure-endpoint-input');
+    const azureKeyInput = document.getElementById('azure-key-input');
+    const azureDeploymentInput = document.getElementById('azure-deployment-input');
+    const azureVersionInput = document.getElementById('azure-version-input');
+
+    // Populate Settings UI
+    azureEndpointInput.value = azureEndpoint;
+    azureKeyInput.value = azureApiKey;
+    azureDeploymentInput.value = azureDeployment;
+    azureVersionInput.value = azureVersionInput.value = azureApiVersion;
+
+    settingsBtn.addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+    });
+
+    closeSettingsBtn.addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+    });
+
+    saveSettingsBtn.addEventListener('click', () => {
+        azureEndpoint = azureEndpointInput.value.trim();
+        azureApiKey = azureKeyInput.value.trim();
+        azureDeployment = azureDeploymentInput.value.trim();
+        azureApiVersion = azureVersionInput.value.trim();
+
+        localStorage.setItem('azureEndpoint', azureEndpoint);
+        localStorage.setItem('azureApiKey', azureApiKey);
+        localStorage.setItem('azureDeployment', azureDeployment);
+        localStorage.setItem('azureApiVersion', azureApiVersion);
+
+        settingsModal.classList.add('hidden');
+        
+        // Trigger explanation regeneration if slides exist
+        if (slides.length > 0) {
+            generateAllExplanations();
+        }
+    });
+</script>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-surface border border-outline-variant rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl p-8 flex flex-col gap-6 relative">
+        <button id="close-settings-btn" class="absolute top-4 right-4 p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full">
+            <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+        <div>
+            <h2 class="font-headline text-xl font-bold text-on-surface">Azure OpenAI Configuration</h2>
+            <p class="text-xs text-on-surface-variant mt-1">Configure your Azure OpenAI deployment settings for slide explanations.</p>
+        </div>
+        
+        <div class="flex flex-col gap-4">
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Azure Endpoint</label>
+                <input type="text" id="azure-endpoint-input" placeholder="https://resource-name.cognitiveservices.azure.com/" class="w-full bg-surface-container-low text-on-surface rounded-xl p-3 border border-outline-variant focus:border-primary focus:outline-none text-sm" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">API Key</label>
+                <input type="password" id="azure-key-input" placeholder="Enter Azure OpenAI API Key" class="w-full bg-surface-container-low text-on-surface rounded-xl p-3 border border-outline-variant focus:border-primary focus:outline-none text-sm" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Deployment Name</label>
+                    <input type="text" id="azure-deployment-input" placeholder="e.g. gpt-4o" class="w-full bg-surface-container-low text-on-surface rounded-xl p-3 border border-outline-variant focus:border-primary focus:outline-none text-sm" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">API Version</label>
+                    <input type="text" id="azure-version-input" placeholder="e.g. 2024-02-15-preview" class="w-full bg-surface-container-low text-on-surface rounded-xl p-3 border border-outline-variant focus:border-primary focus:outline-none text-sm" />
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex justify-end gap-3 mt-2">
+            <button id="save-settings-btn" class="px-5 py-2.5 bg-primary text-on-primary rounded-xl font-semibold text-sm hover:bg-primary-dim transition-all shadow-lg shadow-primary/20">
+                Save & Apply Settings
+            </button>
+        </div>
+    </div>
+</div>
+</body></html>

@@ -1,0 +1,26 @@
+FROM python:3.10-slim
+
+# Install system dependencies for OpenCV and DeepFace
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements and install
+COPY server/analysis/requirements.txt ./server/analysis/
+RUN pip install --no-cache-dir -r server/analysis/requirements.txt
+
+# Copy the rest of the application
+COPY server/analysis/ ./server/analysis/
+
+# Copy cascade XML where opencv-python/deepface expects it
+COPY server/analysis/haarcascade_frontalface_default.xml /usr/local/lib/python3.10/site-packages/cv2/data/
+
+ENV PYTHONPATH=/app
+ENV HOST=0.0.0.0
+ENV PORT=8090
+
+# Command to run the fast API server
+CMD ["python", "server/analysis/emotion_service.py"]

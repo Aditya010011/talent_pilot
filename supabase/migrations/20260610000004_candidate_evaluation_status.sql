@@ -1,0 +1,4 @@
+CREATE TYPE "EvaluationStatus" AS ENUM ('PENDING', 'SHORTLISTED', 'WAITLISTED', 'REJECTED');
+
+ALTER TABLE sessions 
+ADD COLUMN "evaluationStatus" "EvaluationStatus" NOT NULL DEFAULT 'PENDING';

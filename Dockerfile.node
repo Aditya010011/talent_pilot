@@ -1,0 +1,69 @@
+# ──────────────────────────────────────────────────────────────
+# Stage 1: deps — install ALL npm dependencies (the fat layer)
+# ──────────────────────────────────────────────────────────────
+FROM node:20-slim AS deps
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    build-essential \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install --no-audit --no-fund && npm cache clean --force
+
+# ──────────────────────────────────────────────────────────────
+# Stage 2: builder — build the Next.js standalone bundle
+# ──────────────────────────────────────────────────────────────
+FROM deps AS builder
+
+WORKDIR /app
+COPY . .
+
+# NEXT_PUBLIC_* must be present at `next build` (inlined into client chunks).
+# Runtime env_file is not enough for the browser bundle.
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Fail closed without printing secret values.
+RUN node -e "if(!process.env.NEXT_PUBLIC_SUPABASE_URL||!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY){console.error('missing NEXT_PUBLIC supabase build-args');process.exit(1)}"
+# Build Next.js — standalone output writes .next/standalone/
+RUN npm run build
+
+# ──────────────────────────────────────────────────────────────
+# Stage 3: runner — slim runtime image (no node_modules!)
+# Contains only the standalone server + static assets
+# Result: ~300-500 MB instead of 6.2 GB
+# ──────────────────────────────────────────────────────────────
+FROM node:20-slim AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3001
+
+# Copy the self-contained standalone server bundle
+COPY --from=builder /app/.next/standalone ./
+
+# Copy static assets (CSS/JS chunks served by Next.js)
+COPY --from=builder /app/.next/static ./.next/static
+
+# Copy public folder (images, icons, etc.)
+COPY --from=builder /app/public ./public
+
+# Copy any server-side scripts needed at runtime
+COPY --from=builder /app/server ./server
+
+# Expose and start
+EXPOSE 3001
+CMD ["node", "server.js"]
